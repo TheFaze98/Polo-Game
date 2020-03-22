@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Client
 {
@@ -12,64 +13,66 @@ namespace Client
 
         private static Guid _clientId = Guid.Empty;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
+        {
+            Console.Title = "Client";
+            Run();
+            Console.ReadKey();
+        }
+
+        static async Task Run()
         {
             Console.Title = "Client";
             ConnectLoop();
-            WaitLoop();
-            Send();
-            GetResult();
-            Console.ReadLine();
+            await WaitLoop();
+            await Send();
+            await GetResult();
         }
 
-        private static void GetResult()
+        private static async Task GetResult()
         {
             while (true)
             {
                 byte[] buffer = new byte[1024];
-                int receivedData = _tcpClient.Client.Receive(buffer);
+                NetworkStream stream = _tcpClient.GetStream();
+                int receivedData = await stream.ReadAsync(buffer);
                 if (receivedData != 0)
                 {
                     string result = Encoding.ASCII.GetString(buffer, 0, receivedData);
                     Guid winnerId = Guid.Parse(result);
-                    if (winnerId == _clientId)
-                    {
-                        Console.WriteLine("I am the winner!");
-                    }
-                    else
-                    {
-                        Console.WriteLine("I lost");
-                    }
-                    break;
+                    string message = winnerId == _clientId ? "I am the winner!" : "I lost";
+                    Terminate(message);
                 }
             }
         }
 
-        private static void WaitLoop()
+        private static async Task WaitLoop()
         {
-            Console.Write("Waiting for game start");
+            Console.WriteLine("Waiting for game start");
             while (_clientId == Guid.Empty)
             {
                 byte[] buffer = new byte[1024];
-                int receivedData = _tcpClient.Client.Receive(buffer);
-                if (receivedData != 0)
+                NetworkStream stream = _tcpClient.GetStream();
+                int received = await stream.ReadAsync(buffer);
+                if (received != 0)
                 {
-                    string result = Encoding.ASCII.GetString(buffer, 0, receivedData);
+                    string result = Encoding.ASCII.GetString(buffer, 0, received);
                     Guid id = new Guid(result);
                     _clientId = id;
-
+                    Console.WriteLine("Game started");
                 }
 
             }
-            Console.Write("Game started");
         }
 
-        private static void Send()
+        private static async Task Send()
         {
             int randomNumber = new Random().Next(0, 1000);
-            Console.Write("Draw " + randomNumber + " as your random number");
+            Console.WriteLine("Draw " + randomNumber + " as your random number");
             byte[] buffer = Encoding.ASCII.GetBytes(randomNumber.ToString());
-            _tcpClient.Client.Send(buffer);
+            NetworkStream stream = _tcpClient.GetStream();
+            await stream.WriteAsync(buffer);
+            await stream.FlushAsync();
         }
 
         private static void ConnectLoop()
@@ -82,7 +85,7 @@ namespace Client
                 try
                 {
                     attempts++;
-                    _tcpClient.Connect(IPAddress.Loopback, 5000);
+                    _tcpClient.ConnectAsync(IPAddress.Loopback, 5000);
 
                 }
                 catch (SocketException)
@@ -94,6 +97,13 @@ namespace Client
             }
             Console.Clear();
             Console.WriteLine("Connected");
+        }
+
+        private static void Terminate(string message)
+        {
+            Console.WriteLine(message);
+            Console.ReadKey();
+            Environment.Exit(0);
         }
     }
 }

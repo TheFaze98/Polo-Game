@@ -11,8 +11,7 @@ namespace Polo_Game
 {
     class Program
     {
-
-        private static readonly int _numberOfPlayers = 2;
+        private static readonly int _numberOfPlayers = 10;
         private static byte[] _buffer = new byte[1024];
         private static TcpListener _tcpListener = new TcpListener(IPAddress.Any, 5000);
         private static List<Player> _players = new List<Player>();
@@ -20,88 +19,133 @@ namespace Polo_Game
         static void Main(string[] args)
         {
             Console.Title = "Server";
-            WaitForPlayers();
-            SendIdForPlayers();
-            WaitForNumbers();
-            Player winner = GetWinner();
-            SendResults(winner);
-            Console.WriteLine("Enter to terminate");
+            Run();
             Console.ReadLine();
         }
 
-        private static void SendResults(Player winner)
+        private static async Task Run()
+        {
+            await WaitForPlayers();
+            await SendIdForPlayersAsync();
+            await WaitForNumbersAsync();
+            Player winner = GetWinner();
+            await SendResultsAsync(winner.Id);
+            Console.WriteLine("Enter to terminate");
+        }
+
+        private static async Task SendResultsAsync(Guid winnerId)
         {
             Console.WriteLine("Sending results");
             foreach (Player player in _players)
             {
-                byte[] buffer = Encoding.ASCII.GetBytes(winner.Id.ToString());
-                player.Stream.Write(buffer);
-                player.Stream.Flush();
+                byte[] buffer = Encoding.ASCII.GetBytes(winnerId.ToString());
+                await player.Stream.WriteAsync(buffer);
+                await player.Stream.FlushAsync();
             }
         }
 
         private static Player GetWinner()
         {
-            Player winner = null;
-            int maxNumber = 0;
+            Player winner = _players[0];
 
             foreach (Player player in _players)
             {
-                winner = player.RandomNumber > maxNumber ? player : winner;
+                Console.WriteLine(_players.Count);
+                winner = player.RandomNumber > winner.RandomNumber ? player : winner;
             }
             return winner;
         }
 
-        private static void WaitForNumbers()
+        private static async Task WaitForNumbersAsync()
         {
             Console.WriteLine("Collecting results from players");
             foreach (Player player in _players)
             {
-                int received = player.Stream.Read(_buffer);
+                int received = await player.Stream.ReadAsync(_buffer);
                 if (received != 0)
                 {
                     string result = Encoding.ASCII.GetString(_buffer, 0, received);
                     player.RandomNumber = Int32.Parse(result);
-                    player.Stream.Flush();
+                    await player.Stream.FlushAsync();
                 }
             }
 
         }
 
-        private static void SendIdForPlayers()
+        private static async Task SendIdForPlayersAsync()
         {
             Console.WriteLine("Sending ids for " + _numberOfPlayers + " players");
 
             foreach (Player player in _players)
             {
-                byte[] buffer = Encoding.ASCII.GetBytes(player.Id.ToString());
-                player.Stream.Write(buffer);
-                player.Stream.Flush();
+                if (player.TcpClient.Connected)
+                {
+                    byte[] buffer = Encoding.ASCII.GetBytes(player.Id.ToString());
+                    await player.Stream.WriteAsync(buffer);
+                    await player.Stream.FlushAsync();
+                }
+                else
+                {
+                    Console.WriteLine("Player disconnected");
+                }
             }
         }
 
-        private static void WaitForPlayers()
+        private static async Task WaitForPlayers()
         {
-            Console.WriteLine("Wait for " + _numberOfPlayers + " players");
             _tcpListener.Start();
-            WaitForPlayersAsync();
-            Console.WriteLine("All players joined the server");
-        }
-
-        private static void WaitForPlayersAsync()
-        {
-            List<Player> players = new List<Player>();
+            Console.WriteLine("Wait for " + _numberOfPlayers + " players");
             while (true)
             {
-                Player player = new Player(_tcpListener.AcceptTcpClient());
-                players.Add(player);
+                Player player = new Player(await _tcpListener.AcceptTcpClientAsync());
+                _players.Add(player);
                 Console.WriteLine("Player joined the server");
-                if (players.Count >= _numberOfPlayers)
+                if (_players.Count == _numberOfPlayers)
                 {
-                    _players = players;
+                    Console.WriteLine("All players joined the server");
                     break;
                 }
             }
+        }
+
+        private static void Terminate(string message)
+        {
+            Console.WriteLine(message);
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
+
+        public static bool IsConnected(TcpClient client)
+        {
+            try
+            {
+                if (client != null && client.Client != null && client.Client.Connected)
+                {
+                    if (client.Client.Poll(0, SelectMode.SelectRead))
+                    {
+                        byte[] buff = new byte[1];
+                        if (client.Client.Receive(buff, SocketFlags.Peek) == 0)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+            
         }
     }
 }
