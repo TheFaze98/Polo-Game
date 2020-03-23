@@ -41,7 +41,7 @@ namespace Client
                 {
                     string result = Encoding.ASCII.GetString(buffer, 0, receivedData);
                     Guid winnerId = Guid.Parse(result);
-                    string message = winnerId == ClientId ? "I am the winner!" : "I lost ☹️";
+                    string message = winnerId == ClientId ? "I am the winner!" : "I lost ;(";
                     Terminate(message);
                 }
             }
