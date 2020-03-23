@@ -107,7 +107,7 @@ namespace Client
             Console.WriteLine(message);
             if(TcpClient.Connected) Stream.Close();
             TcpClient.Close();
-            if (TcpClient.Connected) Console.ReadKey();
+            Console.ReadKey();
             Environment.Exit(0);
         }
     }
