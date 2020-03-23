@@ -10,16 +10,16 @@ namespace Core
 {
     public class TCPServer
     {
-        private readonly TcpListener _tcpListener;
-        private readonly int _numberOfPlayers;
-        private byte[] _buffer = new byte[1024];
-        public List<Player> _players = new List<Player>();
+        private readonly TcpListener TcpListener;
+        private readonly int NumberOfPlayers;
+        private byte[] Buffer = new byte[1024];
+        public List<Player> Players = new List<Player>();
 
         public TCPServer(TcpListener tcpLuListener, int numberOfPlayers)
         {
-            this._tcpListener = tcpLuListener;
-            this._numberOfPlayers = numberOfPlayers;
-            _tcpListener.Start();
+            this.TcpListener = tcpLuListener;
+            this.NumberOfPlayers = numberOfPlayers;
+            TcpListener.Start();
         }
 
         public async Task SendAsync(NetworkStream stream, string message)
@@ -40,10 +40,10 @@ namespace Core
         {
             try
             {
-                int received = await player.Stream.ReadAsync(_buffer);
+                int received = await player.Stream.ReadAsync(Buffer);
                 if(received != 0)
                 {
-                    string result = Encoding.ASCII.GetString(_buffer, 0, received);
+                    string result = Encoding.ASCII.GetString(Buffer, 0, received);
                     player.RandomNumber = Int32.Parse(result);
                     await player.Stream.FlushAsync();
                 }
@@ -57,15 +57,15 @@ namespace Core
         public async Task WaitForPlayers()
         {
             var cancellation = new CancellationTokenSource();
-            cancellation.Token.Register(() => _tcpListener.Stop());
+            cancellation.Token.Register(() => TcpListener.Stop());
             try
             {
                 while (true)
                 {
-                    Player player = new Player(await Task.Run(() => _tcpListener.AcceptTcpClientAsync(), cancellation.Token));
-                    _players.Add(player);
+                    Player player = new Player(await Task.Run(() => TcpListener.AcceptTcpClientAsync(), cancellation.Token));
+                    Players.Add(player);
                     Console.WriteLine("Player joined the server");
-                    if (_players.Count == _numberOfPlayers)
+                    if (Players.Count == NumberOfPlayers)
                     {
                         cancellation.Cancel();
                         break;
@@ -74,14 +74,14 @@ namespace Core
             }
             finally
             {
-                _tcpListener.Stop();
+                TcpListener.Stop();
             }
         }
 
         public void Terminate(string message)
         {
             Console.WriteLine(message);
-            foreach (Player player in _players)
+            foreach (Player player in Players)
             {
                 if(player.TcpClient.Connected) player.Stream.Close();
                 player.TcpClient.Close();

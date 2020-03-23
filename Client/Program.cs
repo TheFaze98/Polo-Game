@@ -8,11 +8,11 @@ namespace Client
 {
     class Program
     {
-        private static readonly TcpClient _tcpClient = new TcpClient();
+        private static readonly TcpClient TcpClient = new TcpClient();
 
-        private static  NetworkStream _stream => _tcpClient.GetStream();
+        private static  NetworkStream Stream => TcpClient.GetStream();
 
-        private static Guid _clientId = Guid.Empty;
+        private static Guid ClientId = Guid.Empty;
 
         static async Task Main(string[] args)
         {
@@ -36,12 +36,12 @@ namespace Client
             try
             {
                 byte[] buffer = new byte[1024];
-                int receivedData = await _stream.ReadAsync(buffer);
+                int receivedData = await Stream.ReadAsync(buffer);
                 if (receivedData != 0)
                 {
                     string result = Encoding.ASCII.GetString(buffer, 0, receivedData);
                     Guid winnerId = Guid.Parse(result);
-                    string message = winnerId == _clientId ? "I am the winner!" : "I lost ☹️";
+                    string message = winnerId == ClientId ? "I am the winner!" : "I lost ☹️";
                     Terminate(message);
                 }
             }
@@ -57,12 +57,12 @@ namespace Client
             try 
             {
                 byte[] buffer = new byte[1024];
-                int received = await _stream.ReadAsync(buffer);
+                int received = await Stream.ReadAsync(buffer);
                 if (received != 0)
                 {
                     string result = Encoding.ASCII.GetString(buffer, 0, received);
                     Guid id = new Guid(result);
-                    _clientId = id;
+                    ClientId = id;
                     Console.WriteLine("Game started");
                 }
             }
@@ -77,20 +77,20 @@ namespace Client
             int randomNumber = new Random().Next(0, 1000);
             Console.WriteLine("Draw " + randomNumber + " as your random number");
             byte[] buffer = Encoding.ASCII.GetBytes(randomNumber.ToString());
-            await _stream.WriteAsync(buffer);
-            await _stream.FlushAsync();
+            await Stream.WriteAsync(buffer);
+            await Stream.FlushAsync();
         }
 
         private static async Task ConnectLoop()
         {
             int attempts = 0;
 
-            while (!_tcpClient.Connected)
+            while (!TcpClient.Connected)
             {
                 try
                 {
                     attempts++;
-                    await _tcpClient.ConnectAsync(IPAddress.Loopback, 5000);
+                    await TcpClient.ConnectAsync(IPAddress.Loopback, 5000);
                 }
                 catch (Exception)
                 {
@@ -105,9 +105,9 @@ namespace Client
         private static void Terminate(string message)
         {
             Console.WriteLine(message);
-            if(_tcpClient.Connected) _stream.Close();
-            _tcpClient.Close();
-            if (_tcpClient.Connected) Console.ReadKey();
+            if(TcpClient.Connected) Stream.Close();
+            TcpClient.Close();
+            if (TcpClient.Connected) Console.ReadKey();
             Environment.Exit(0);
         }
     }

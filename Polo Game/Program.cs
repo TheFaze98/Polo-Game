@@ -10,23 +10,23 @@ namespace Polo_Game
 
     class Program
     {
-        private static readonly int _numberOfPlayers = 4;
+        private static readonly int NumberOfPlayers = 2;
 
-        private static TCPServer _server;
-        private static List<Player> _players => _server._players;
+        private static TCPServer Server;
+        private static List<Player> Players => Server.Players;
 
         static void Main(string[] args)
         {
             Console.Title = "Server";
             TcpListener tcpListener = new TcpListener(IPAddress.Any, 5000);
-            _server = new TCPServer(tcpListener, _numberOfPlayers);
+            Server = new TCPServer(tcpListener, NumberOfPlayers);
 
             Console.WriteLine("Server started");
             Run();
 
             Console.WriteLine("Enter key to end the game and close the server");
             Console.ReadKey();
-            _server.Terminate("Server closed");
+            Server.Terminate("Server closed");
         }
 
         private static async Task Run()
@@ -41,18 +41,18 @@ namespace Polo_Game
         private static async Task SendWinnderIdToPlayers(Guid winnerId)
         {
             Console.WriteLine("Sending results");
-            foreach (Player player in _players)
+            foreach (Player player in Players)
             {
-               await _server.SendAsync(player.Stream, winnerId.ToString());
+               await Server.SendAsync(player.Stream, winnerId.ToString());
             }
-            _server.Terminate("Game ended");
+            Server.Terminate("Game ended");
         }
 
         private static Player GetWinner()
         {
-            Player winner = _server._players[0];
+            Player winner = Server.Players[0];
 
-            foreach (Player player in _players)
+            foreach (Player player in Players)
             {
                 winner = player.RandomNumber > winner.RandomNumber ? player : winner;
             }
@@ -62,21 +62,21 @@ namespace Polo_Game
         private static async Task WaitForNumbersAsync()
         {
             Console.WriteLine("Collecting results from players");
-            foreach (Player player in _players)
+            foreach (Player player in Players)
             {
-                await _server.GetRandomNumberAsync(player);
+                await Server.GetRandomNumberAsync(player);
             }
 
         }
 
         private static async Task SendIdForPlayersAsync()
         {
-            Console.WriteLine("Sending ids for " + _numberOfPlayers + " players");
-            foreach (Player player in _players)
+            Console.WriteLine("Sending ids for " + NumberOfPlayers + " players");
+            foreach (Player player in Players)
             {
                 if (player.TcpClient.Connected)
                 {
-                    await _server.SendAsync(player.Stream, player.Id.ToString());
+                    await Server.SendAsync(player.Stream, player.Id.ToString());
                 }
                 else
                 {
@@ -88,8 +88,8 @@ namespace Polo_Game
 
         private static async Task WaitForPlayers()
         {
-            Console.WriteLine("Wait for " + _numberOfPlayers + " players");
-            await _server.WaitForPlayers().ContinueWith(x => Console.WriteLine("All players joined the server"));
+            Console.WriteLine("Wait for " + NumberOfPlayers + " players");
+            await Server.WaitForPlayers().ContinueWith(x => Console.WriteLine("All players joined the server"));
         }
 
     }
