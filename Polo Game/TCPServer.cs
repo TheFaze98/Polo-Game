@@ -62,8 +62,7 @@ namespace Core
             {
                 while (true)
                 {
-                    Player player =
-                        new Player(await Task.Run(() => _tcpListener.AcceptTcpClientAsync(), cancellation.Token));
+                    Player player = new Player(await Task.Run(() => _tcpListener.AcceptTcpClientAsync(), cancellation.Token));
                     _players.Add(player);
                     Console.WriteLine("Player joined the server");
                     if (_players.Count == _numberOfPlayers)
@@ -79,9 +78,15 @@ namespace Core
             }
         }
 
-        private static void Terminate(string message)
+        public void Terminate(string message)
         {
             Console.WriteLine(message);
+            foreach (Player player in _players)
+            {
+                if(player.TcpClient.Connected) player.Stream.Close();
+                player.TcpClient.Close();
+            }
+            Console.WriteLine("Enter to exit");
             Console.ReadKey();
             Environment.Exit(0);
         }

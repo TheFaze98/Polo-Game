@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Polo Game\Server.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{0DC90C11-0DF5-4B7D-A6EE-21B583ECDD27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{2EF144BB-7AC3-47FE-981A-A298D8B01EED}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{0DC90C11-0DF5-4B7D-A6EE-21B583ECDD27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DC90C11-0DF5-4B7D-A6EE-21B583ECDD27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DC90C11-0DF5-4B7D-A6EE-21B583ECDD27}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2EF144BB-7AC3-47FE-981A-A298D8B01EED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2EF144BB-7AC3-47FE-981A-A298D8B01EED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2EF144BB-7AC3-47FE-981A-A298D8B01EED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2EF144BB-7AC3-47FE-981A-A298D8B01EED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

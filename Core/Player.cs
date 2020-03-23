@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace Polo_Game
 {
@@ -17,6 +18,12 @@ namespace Polo_Game
         {
             this.TcpClient = tcpClient;
             this.Id = Guid.NewGuid();
+        }
+
+        public Player(TcpClient tcpClient, Guid guid)
+        {
+            this.TcpClient = tcpClient;
+            this.Id = guid;
         }
     }
 }
